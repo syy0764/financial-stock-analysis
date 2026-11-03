@@ -74,6 +74,11 @@ Python의 FinanceDataReader를 이용해 은행주 4종과 KOSPI의 일별 데�
 
 ## 4. 분석 과정
 
+### 실행 위치 안내
+
+- 데이터 적재 파일인 `sql/02_load_raw_data.sql`의 `\copy` 명령은 PostgreSQL의 `psql`에서 실행한다. 상대경로가 올바르게 연결되도록 프로젝트 최상위 폴더(`financial-stock-analysis`)에서 `psql`을 시작한다.
+- Python 노트북은 작업 폴더를 `notebooks`로 두고 실행한다. 데이터와 그래프 저장 경로는 이 위치를 기준으로 작성했다.
+
 ### 일별 수익률 계산
 
 은행주 4종과 KOSPI의 종가를 이용해 전 거래일보다 얼마나 오르거나 내렸는지 계산했다.
