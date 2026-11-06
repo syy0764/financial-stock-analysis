@@ -28,7 +28,12 @@ FROM raw.usd_krw_raw
 UNION ALL
 
 SELECT 'base_rate', COUNT(*)
-FROM raw.base_rate_raw;
+FROM raw.base_rate_raw
+
+UNION ALL
+
+SELECT 'usd_krw_fred', COUNT(*)
+FROM raw.usd_krw_fred_raw;
 
 SELECT *
 FROM raw.usd_krw_raw
@@ -46,5 +51,9 @@ SELECT *
 FROM raw.base_rate_raw
 LIMIT 5;
 
-SELECT COUNT(*), COUNT(DISTINCT trade_date), COUNT(exchange_rate)
-FROM raw.usd_krw_fred_raw
+SELECT COUNT(*) AS total_rows,
+       COUNT(DISTINCT trade_date) AS unique_dates,
+       COUNT(*) - COUNT(DISTINCT trade_date) AS duplicate_rows,
+       COUNT(exchange_rate) AS valid_exchange_rows,
+       COUNT(*) - COUNT(exchange_rate) AS missing_exchange_rows
+FROM raw.usd_krw_fred_raw;

@@ -10,9 +10,7 @@ CREATE TABLE IF NOT EXISTS clean.kb_financial (
     change_rate NUMERIC
 );
 
-SELECT *
-FROM raw.kb_financial_raw
-LIMIT 5;
+
 
 TRUNCATE TABLE clean.kb_financial;
 
@@ -144,9 +142,7 @@ UNION ALL
 SELECT 'woori' AS company, COUNT(*), MIN(trade_date), MAX(trade_date)
 FROM clean.woori_financial;
 
-SELECT *
-FROM raw.kospi_raw
-LIMIT 5;
+
 
 CREATE TABLE IF NOT EXISTS clean.kospi(
     trade_date DATE,
@@ -208,81 +204,7 @@ WHERE high_price IS NULL
    OR market_cap IS NULL
    OR up_down IS NULL;
 
-SELECT *
-FROM raw.usd_krw_raw
-LIMIT 5;
 
-SELECT COUNT(*), MIN(trade_date), MAX(trade_date), COUNT(DISTINCT trade_date)
-FROM raw.usd_krw_raw
-
-SELECT volume, COUNT(*)
-FROM raw.usd_krw_raw
-GROUP BY volume
-ORDER BY COUNT(*) DESC;
-
-SELECT trade_date, close_price, adjusted_close_price, volume
-FROM raw.usd_krw_raw
-WHERE close_price IS DISTINCT FROM adjusted_close_price
-   OR close_price IS NULL
-   OR adjusted_close_price IS NULL;
-
-SELECT trade_date, open_price, high_price, low_price, close_price
-FROM raw.usd_krw_raw
-WHERE close_price IS NULL;
-
-SELECT
-    COUNT(*) AS target_rows,
-    COUNT(DISTINCT trade_date) AS distinct_dates,
-    MIN(trade_date) AS first_date,
-    MAX(trade_date) AS last_date
-FROM raw.usd_krw_raw
-WHERE CAST(trade_date AS DATE) >= DATE '2021-01-01'
-  AND CAST(trade_date AS DATE) < DATE '2026-01-01'
-  AND open_price IS NOT NULL
-  AND high_price IS NOT NULL
-  AND low_price IS NOT NULL
-  AND close_price IS NOT NULL;
-
-  CREATE TABLE IF NOT EXISTS clean.usd_krw(
-    trade_date DATE,
-    open_price NUMERIC,
-    high_price NUMERIC,
-    low_price NUMERIC,
-    close_price NUMERIC
-  );
-
-TRUNCATE TABLE clean.usd_krw;
-
-INSERT INTO clean.usd_krw(
-    trade_date,
-    open_price,
-    high_price,
-    low_price,
-    close_price
-)
-SELECT
-    CAST(trade_date AS DATE),
-    CAST(open_price AS NUMERIC),
-    CAST(high_price AS NUMERIC),
-    CAST(low_price AS NUMERIC),
-    CAST(close_price AS NUMERIC)
-FROM raw.usd_krw_raw
-WHERE CAST(trade_date AS DATE) >= DATE '2021-01-01'
-  AND CAST(trade_date AS DATE) < DATE '2026-01-01'
-  AND open_price IS NOT NULL
-  AND high_price IS NOT NULL
-  AND low_price IS NOT NULL
-  AND close_price IS NOT NULL;
-
-SELECT COUNT(*), COUNT(DISTINCT trade_date), MIN(trade_date), MAX(trade_date)
-FROM clean.usd_krw;
-
-SELECT *
-FROM raw.base_rate_raw
-LIMIT 5;
-
-SELECT COUNT(*), COUNT(DISTINCT change_date), COUNT(base_rate), MIN(change_date), MAX(change_date)
-FROM raw.base_rate_raw;
 
 CREATE TABLE IF NOT EXISTS clean.base_rate(
     change_date DATE PRIMARY KEY,
@@ -303,63 +225,29 @@ FROM raw.base_rate_raw;
 SELECT COUNT(*), COUNT(DISTINCT change_date), MIN(change_date), MAX(change_date)
 FROM clean.base_rate;
 
-SELECT COUNT(*) 
-FROM clean.kb_financial AS kb 
-JOIN clean.kospi AS k  
-ON kb.trade_date = k.trade_date;
 
-SELECT MIN(kb.trade_date), MAX(kb.trade_date) 
-FROM clean.kb_financial AS kb 
-JOIN clean.kospi AS k  
-ON kb.trade_date = k.trade_date
-JOIN clean.usd_krw AS fx
-ON fx.trade_date = k.trade_date;
 
-SELECT kb.trade_date
-FROM clean.kb_financial AS kb
-LEFT JOIN clean.usd_krw AS fx
-ON kb.trade_date = fx.trade_date
-WHERE fx.trade_date IS NULL
-ORDER BY kb.trade_date
-LIMIT 10;
-
-SELECT trade_date, close_price
-FROM clean.usd_krw
-WHERE trade_date BETWEEN DATE '2025-10-22' AND DATE '2025-10-27'
-ORDER BY trade_date;
-
-SELECT trade_date, close_price
-FROM raw.usd_krw_raw
-WHERE trade_date = '2025-10-24';
-
-SELECT COUNT(*), EXTRACT(ISODOW FROM kb.trade_date) 
-FROM clean.kb_financial AS kb 
-LEFT JOIN clean.usd_krw AS fx 
-ON kb.trade_date = fx.trade_date 
-WHERE fx.trade_date IS NULL 
-GROUP BY EXTRACT(ISODOW FROM kb.trade_date) 
-ORDER BY EXTRACT(ISODOW FROM kb.trade_date);
-
-SELECT COUNT(*), EXTRACT(ISODOW FROM trade_date) 
-FROM clean.usd_krw
-GROUP BY EXTRACT(ISODOW FROM trade_date) 
-ORDER BY EXTRACT(ISODOW FROM trade_date);
-
-SELECT trade_date, close_price
-FROM clean.usd_krw
-WHERE trade_date BETWEEN DATE '2021-04-08' AND DATE '2021-04-12'
-ORDER BY trade_date;
-
-CREATE TABLE IF NOT EXISTS clean.usd_krw_fred(
+-- 최종 분석에 사용하는 FRED 환율 정제
+CREATE TABLE IF NOT EXISTS clean.usd_krw_fred (
     trade_date DATE PRIMARY KEY,
     exchange_rate NUMERIC
 );
 
-INSERT INTO clean.usd_krw_fred
-SELECT 
+TRUNCATE TABLE clean.usd_krw_fred;
+
+INSERT INTO clean.usd_krw_fred (
+    trade_date,
+    exchange_rate
+)
+SELECT
     CAST(trade_date AS DATE),
     CAST(exchange_rate AS NUMERIC)
 FROM raw.usd_krw_fred_raw;
 
-SELECT COUNT(*), COUNT(DISTINCT trade_date), COUNT(exchange_rate), MIN(trade_date), MAX(trade_date)
-FROM clean.usd_krw_fred
+SELECT COUNT(*) AS total_rows,
+       COUNT(DISTINCT trade_date) AS unique_dates,
+       COUNT(exchange_rate) AS valid_exchange_rows,
+       COUNT(*) - COUNT(exchange_rate) AS missing_exchange_rows,
+       MIN(trade_date) AS first_date,
+       MAX(trade_date) AS last_date
+FROM clean.usd_krw_fred;

@@ -28,7 +28,9 @@ Python의 FinanceDataReader를 이용해 은행주 4종과 KOSPI의 일별 데�
 
 ### 환율
 
-미국 1달러를 원화로 바꿀 때의 환율을 사용했다. FinanceDataReader를 통해 FRED의 일별 환율 자료를 수집했다.
+미국 1달러를 원화로 바꿀 때의 환율을 사용했다. FRED의 DEXKOUS 원본 CSV를 pandas의 read_csv로 직접 읽었다. 원본의 결측 표시 "."은 NaN으로 처리하고 유지했다.
+
+초기 검토용 환율 자료인 usd_krw.csv는 별도로 보관했으며, 최종 환율 분석에는 usd_krw_fred.csv를 사용했다.
 
 - 제공 서비스: FRED
 - 원자료 제공 기관: 미국 연방준비제도 이사회
@@ -36,6 +38,8 @@ Python의 FinanceDataReader를 이용해 은행주 4종과 KOSPI의 일별 데�
 - 수집 요청 기간: 2021-01-01~2025-12-31
 - 단위: 원/달러 — 미국 1달러당 원화 금액
 - 자료 주소: [FRED DEXKOUS](https://fred.stlouisfed.org/series/DEXKOUS)
+- 수집 결과: 1,303행, 2021-01-04~2025-12-31
+- 원본 환율 결측값: 54개
 
 ### 기준금리
 
@@ -78,6 +82,22 @@ Python의 FinanceDataReader를 이용해 은행주 4종과 KOSPI의 일별 데�
 
 - 데이터 적재 파일인 `sql/02_load_raw_data.sql`의 `\copy` 명령은 PostgreSQL의 `psql`에서 실행한다. 상대경로가 올바르게 연결되도록 프로젝트 최상위 폴더(`financial-stock-analysis`)에서 `psql`을 시작한다.
 - Python 노트북은 작업 폴더를 `notebooks`로 두고 실행한다. 데이터와 그래프 저장 경로는 이 위치를 기준으로 작성했다.
+
+### 실행 순서
+
+저장소에 포함된 CSV를 이용해 분석을 재현하는 순서는 다음과 같다.
+
+1. 분석용 PostgreSQL 데이터베이스에 접속한다.
+2. sql/01_create_raw_tables.sql로 원본 테이블을 생성한다.
+3. sql/02_load_raw_data.sql로 원본 CSV를 적재한다.
+4. sql/03_validate_raw_data.sql로 원본 데이터의 적재 결과를 확인한다.
+5. sql/04_clean_data.sql로 자료형을 변환하고 정제 데이터를 생성한다.
+6. sql/05_join_data.sql로 데이터 결합 결과와 중복·결측을 확인한다.
+7. sql/06_return_analysis.sql로 수익률과 관련 지표를 계산한다.
+8. 06_return_analysis.sql의 ‘분석: 기준금리 수준별 은행·KOSPI 수익률 요약’ 쿼리 결과 48행을 열 이름과 함께 data/processed/base_rate_summary.csv로 내보낸다.
+9. notebooks/03_result_visualization.ipynb를 실행해 그래프를 생성하고 results 폴더에 저장한다.
+
+notebooks/01_data_collection.ipynb는 원본 데이터 수집용이며, 다시 실행하면 원본 CSV를 덮어쓴다. notebooks/02_data_validation.ipynb는 저장된 원본 CSV를 검증하는 용도다.
 
 ### 일별 수익률 계산
 

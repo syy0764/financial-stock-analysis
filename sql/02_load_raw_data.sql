@@ -7,7 +7,8 @@ TRUNCATE TABLE
     raw.woori_financial_raw,
     raw.kospi_raw,
     raw.usd_krw_raw,
-    raw.base_rate_raw;
+    raw.base_rate_raw,
+    raw.usd_krw_fred_raw;
     
 \copy raw.kb_financial_raw FROM 'data/raw/kb_financial.csv' WITH (FORMAT CSV, HEADER TRUE, DELIMITER ',');
 

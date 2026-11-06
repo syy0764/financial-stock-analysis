@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS raw.kospi_raw (
     market_cap TEXT
 );
 
+-- 초기 수집·검토용 환율 원본. 최종 환율 분석에는 usd_krw_fred_raw를 사용한다.
 CREATE TABLE IF NOT EXISTS raw.usd_krw_raw (
     trade_date TEXT,
     open_price TEXT,
@@ -69,12 +70,12 @@ CREATE TABLE IF NOT EXISTS raw.base_rate_raw (
     base_rate TEXT
 );
 
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'raw'
-ORDER BY table_name;
-
 CREATE TABLE IF NOT EXISTS raw.usd_krw_fred_raw(
     trade_date TEXT,
     exchange_rate TEXT
 );
+
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'raw'
+ORDER BY table_name;
